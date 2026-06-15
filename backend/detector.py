@@ -7,19 +7,24 @@ class StackInfo(BaseModel):
     framework: str
     port: Optional[int]
 
-def detect_stack(repo_url: str):
+# Update the function signature
+def detect_stack(repo_url: str, root_dir: str = None):
     try:
-        # Extract owner and repo from the URL (e.g., https://github.com/owner/repo)
         parts = repo_url.rstrip('/').split('/')
         owner, repo = parts[-2], parts[-1]
         
+        # Base API URL
         api_url = f"https://api.github.com/repos/{owner}/{repo}/contents"
         
-        # Standard unauthenticated request
+        # If the user specified a subfolder, append it cleanly
+        if root_dir:
+            clean_dir = root_dir.strip('/')
+            api_url = f"{api_url}/{clean_dir}"
+            
         headers = {
             "Accept": "application/vnd.github.v3+json"
         }
-
+        
         response = requests.get(api_url, headers=headers)
         
         # Handle specific GitHub API errors

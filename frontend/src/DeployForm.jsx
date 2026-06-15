@@ -6,6 +6,7 @@ export default function DeployForm() {
   const [repoUrl, setRepoUrl] = useState('');
   const [status, setStatus] = useState('idle'); // idle, loading, success, error
   const [result, setResult] = useState(null);
+  const [rootDir, setRootDir] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,7 +17,7 @@ export default function DeployForm() {
       const response = await fetch('http://127.0.0.1:8000/detect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: repoUrl }),
+        body: JSON.stringify({ url: repoUrl, root_dir: rootDir || null }),
       });
 
       const data = await response.json();
@@ -41,22 +42,33 @@ export default function DeployForm() {
       <h2 className="text-2xl font-bold text-white mb-2">Deploy a New Service</h2>
       <p className="text-slate-400 mb-6">Paste a GitHub repository URL to auto-detect and deploy.</p>
       
-      <form onSubmit={handleSubmit} className="flex gap-4 mb-6">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4 mb-6">
+        <div className="flex gap-4">
+          <input
+            type="url"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            placeholder="https://github.com/username/repo"
+            required
+            className="flex-1 bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+          />
+          <button
+            type="submit"
+            disabled={status === 'loading'}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold px-6 py-3 rounded-lg transition-colors min-w-[120px]"
+          >
+            {status === 'loading' ? 'Scanning...' : 'Detect'}
+          </button>
+        </div>
+        
+        {/* New Root Directory Field */}
         <input
-          type="url"
-          value={repoUrl}
-          onChange={(e) => setRepoUrl(e.target.value)}
-          placeholder="https://github.com/username/repo"
-          required
-          className="flex-1 bg-slate-900 text-white border border-slate-600 rounded-lg px-4 py-3 focus:outline-none focus:border-blue-500"
+          type="text"
+          value={rootDir}
+          onChange={(e) => setRootDir(e.target.value)}
+          placeholder="Root Directory (e.g., backend/ or leave blank for root)"
+          className="w-full bg-slate-900 text-sm text-slate-300 border border-slate-700 rounded-lg px-4 py-2 focus:outline-none focus:border-blue-500"
         />
-        <button
-          type="submit"
-          disabled={status === 'loading'}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-semibold px-6 py-3 rounded-lg transition-colors min-w-[120px]"
-        >
-          {status === 'loading' ? 'Scanning...' : 'Detect'}
-        </button>
       </form>
 
       {/* Result Display Area */}
@@ -90,8 +102,10 @@ export default function DeployForm() {
       )}
 
       {status === 'error' && (
-        <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30">
-          <p className="text-red-400">Failed to connect to the deployment engine. Is the backend running?</p>
+        <div className="bg-red-900/20 p-4 rounded-lg border border-red-500/30 w-full mt-6 text-left">
+          <p className="text-red-400">
+            {result?.message || 'Failed to connect to the deployment engine. Is the backend running?'}
+          </p>
         </div>
       )}
     </div>
